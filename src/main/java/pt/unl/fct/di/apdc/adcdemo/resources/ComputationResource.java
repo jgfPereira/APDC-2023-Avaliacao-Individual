@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class ComputationResource {
 
     private static final Logger LOG = Logger.getLogger(ComputationResource.class.getName());
-    private static final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
+    private static final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSz");
     private final Gson g = new Gson();
 
     public ComputationResource() {

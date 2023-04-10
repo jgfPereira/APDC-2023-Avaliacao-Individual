@@ -31,6 +31,10 @@
             <param-value>false</param-value>
         </init-param>
         <init-param>
+            <param-name>jersey.config.server.provider.classnames</param-name>
+            <param-value>pt.unl.fct.di.apdc.adcdemo.filters.AdditionalResponseHeadersFilter</param-value>
+        </init-param>
+        <init-param>
             <param-name>jersey.config.servlet.filter.contextPath</param-name>
             <param-value>/rest/*</param-value>
         </init-param>
