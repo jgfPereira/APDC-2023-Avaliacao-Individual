@@ -68,7 +68,7 @@ public class ComputationResource {
     @Path("/compute")
     public Response triggerExecuteComputeTask() throws IOException {
         String projectId = "adc-demo-383221";
-        String queueName = "Default";
+        String queueName = "default";
         String location = "europe-west6";
         LOG.log(Level.INFO, projectId + " :: " + queueName + " :: " + location);
         try (CloudTasksClient client = CloudTasksClient.create()) {
