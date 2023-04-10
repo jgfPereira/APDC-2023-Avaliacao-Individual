@@ -11,11 +11,6 @@ public class RegisterData {
     public RegisterData() {
     }
 
-    public RegisterData(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
-
     public boolean validateRegisterDataV2() {
         if (this.username == null || this.password == null || this.confirmation == null || this.email == null
                 || this.name == null) {

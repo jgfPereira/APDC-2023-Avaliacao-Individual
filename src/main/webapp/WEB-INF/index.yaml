@@ -1,0 +1,6 @@
+indexes:
+  - kind: LoginLog
+    ancestor: yes
+    properties:
+      - name: login_time
+        direction: desc

@@ -59,17 +59,13 @@ public class RegisterResource {
             }
 
             Entity person = Entity.newBuilder(userKey).set("password", DigestUtils.sha3_512Hex(data.password))
-                    .set("confirmation", data.confirmation).set("email", data.email).set("name", data.name)
+                    .set("confirmation", DigestUtils.sha3_512Hex(data.confirmation)).set("email", data.email).set("name", data.name)
                     .set("timestamp", Timestamp.now()).build();
             t.put(person);
             LOG.fine("User was registered: " + data.username);
             t.commit();
             return Response.ok("Register done.").build();
 
-        } catch (Exception e) {
-            t.rollback();
-            LOG.fine(e.getLocalizedMessage());
-            return Response.status(500, "Server Error").build();
         } finally {
             if (t.isActive()) {
                 t.rollback();
