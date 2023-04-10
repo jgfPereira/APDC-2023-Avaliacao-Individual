@@ -81,7 +81,7 @@ public class LoginResource {
 
                 final String givenPasswordHash = DigestUtils.sha3_512Hex(data.password);
                 if (personOnDB.getString("password").equals(givenPasswordHash)) {
-                    LOG.fine("Password is corret. Generating token...");
+                    LOG.fine("Password is correct. Generating token...");
                     AuthToken at = new AuthToken(data.username);
 
                     Entity loginLog = Entity.newBuilder(loginLogKey).set("login_ip", request.getRemoteAddr())
