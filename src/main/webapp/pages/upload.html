@@ -18,7 +18,7 @@
             <form action="/pages/upload.html" enctype="text/plain" id="putFile" method="get" name="putFile">
                 <div>
                     Bucket: <input name="bucket" type="text"/>
-                    File: <input name="files" type="file"/>
+                    File: <input name="files" type="file" value="Choose File"/>
                     <input name="fileName" type="hidden"/>
                     <input onclick='uploadFile(this)' type="submit" value="Upload Content"/>
                 </div>
@@ -47,6 +47,7 @@
 </table>
 <script>
     function setDownloadDefaults() {
+        //gives query parameters
         var url = location.search;
         var bucketArg = url.match(/bucket=[^&]*&/);
         if (bucketArg !== null) {
