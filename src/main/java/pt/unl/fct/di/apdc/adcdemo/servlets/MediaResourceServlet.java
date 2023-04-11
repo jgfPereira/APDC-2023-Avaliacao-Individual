@@ -36,6 +36,7 @@ public class MediaResourceServlet extends HttpServlet {
 
         // Download object to the output stream. See Google's documentation.
         resp.setContentType(blob.getContentType());
+        //forces download in all cases - otherwise some file formats (like .jpg, .png) wont download
         resp.setHeader("Content-disposition", "attachment; filename=" + srcFilename);
         blob.downloadTo(resp.getOutputStream());
     }
