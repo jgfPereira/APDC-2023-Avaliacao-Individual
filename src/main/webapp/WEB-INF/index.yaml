@@ -1,5 +1,4 @@
 indexes:
-    
   - kind: LoginLog
     ancestor: yes
     properties:
