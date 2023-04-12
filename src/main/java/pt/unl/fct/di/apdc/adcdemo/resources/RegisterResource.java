@@ -1,6 +1,5 @@
 package pt.unl.fct.di.apdc.adcdemo.resources;
 
-
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.*;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -25,51 +24,50 @@ public class RegisterResource {
     public RegisterResource() {
     }
 
-    @POST
-    @Path("/v1")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response doRegister(RegisterData data) {
-        LOG.fine("User attempt to register");
-        Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
-        Entity person = Entity.newBuilder(userKey).set("password", DigestUtils.sha3_512Hex(data.password))
-                .set("timestamp", (Timestamp.now())).build();
-        datastore.put(person);
-        return Response.ok("Register done.").build();
+    private String hashPass(String pass) {
+        return DigestUtils.sha3_512Hex(pass);
     }
 
     @POST
-    @Path("/v2")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response doRegisterV2(RegisterData data) {
+    public Response doRegister(RegisterData data) {
         LOG.fine("User attempt to register");
-        if (data == null || !data.validateRegisterDataV2()) {
-            LOG.fine("Invalid data: Null values or pass and confirmation dont match.");
-            return Response.status(400, "Bad Request - Invalid data.").build();
+        if (data == null || !data.validateData()) {
+            LOG.fine("Invalid data: at least one field is null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+        } else if (!data.validatePasswords()) {
+            LOG.fine("Passwords dont match");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Passwords dont match").build();
         }
 
-        Transaction t = datastore.newTransaction();
+        Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
+        Transaction txn = datastore.newTransaction();
         try {
-            Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
-            Entity personOnDB = t.get(userKey);
-
-            if (personOnDB != null) {
-                t.rollback();
-                LOG.fine("User already exists!");
-                return Response.status(409, "Conflict - username is already taken").build();
+            Entity userOnDB = txn.get(userKey);
+            if (userOnDB != null) {
+                LOG.fine("User already exists");
+                txn.rollback();
+                return Response.status(Response.Status.CONFLICT).entity("Conflict - username is already taken").build();
             }
-
-            Entity person = Entity.newBuilder(userKey).set("password", DigestUtils.sha3_512Hex(data.password))
-                    .set("confirmation", DigestUtils.sha3_512Hex(data.confirmation)).set("email", data.email).set("name", data.name)
-                    .set("timestamp", Timestamp.now()).build();
-            t.put(person);
-            LOG.fine("User was registered: " + data.username);
-            t.commit();
-            return Response.ok("Register done.").build();
-
+            Entity user = Entity.newBuilder(userKey)
+                    .set("password", hashPass(data.password))
+                    .set("passConf", hashPass(data.passConf))
+                    .set("email", data.email)
+                    .set("name", data.name)
+                    .set("creationDate", Timestamp.now())
+                    .build();
+            txn.put(user);
+            LOG.fine("Register done: " + data.username);
+            txn.commit();
+            return Response.ok("Register done").build();
+        } catch (Exception e) {
+            txn.rollback();
+            LOG.severe(e.getLocalizedMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
         } finally {
-            if (t.isActive()) {
-                t.rollback();
-                return Response.status(500, "Server Error").build();
+            if (txn.isActive()) {
+                txn.rollback();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
             }
         }
     }
