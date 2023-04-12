@@ -27,7 +27,7 @@ public class RegisterData {
 
     public boolean validatePasswordConstraints() {
         List<Rule> passRules = new ArrayList<>();
-        passRules.add(new LengthRule(8));
+        passRules.add(new LengthRule(8, 20));
         passRules.add(new CharacterRule(EnglishCharacterData.UpperCase, 1));
         passRules.add(new CharacterRule(EnglishCharacterData.LowerCase, 1));
         passRules.add(new CharacterRule(EnglishCharacterData.Digit, 1));
