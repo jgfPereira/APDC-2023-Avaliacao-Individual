@@ -17,7 +17,7 @@ public class RegisterData {
     }
 
     public boolean validateData() {
-        return (this.username == null || this.password == null || this.passConf == null || this.email == null
+        return !(this.username == null || this.password == null || this.passConf == null || this.email == null
                 || this.name == null);
     }
 
