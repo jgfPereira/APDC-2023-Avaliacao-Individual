@@ -38,6 +38,9 @@ public class RegisterResource {
         } else if (!data.validatePasswords()) {
             LOG.fine("Passwords dont match");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Passwords dont match").build();
+        } else if (!data.validatePasswordConstraints()) {
+            LOG.fine("Passwords dont meet constraints");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - passwords dont meet constraints").build();
         }
 
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
