@@ -7,11 +7,20 @@ import java.util.List;
 
 public class RegisterData {
 
+    public static final String DEFAULT_ROLE = "USER";
+    public static final String DEFAULT_STATE = "INACTIVE";
+
     public String username;
     public String password;
     public String passConf;
     public String email;
     public String name;
+    public String visibility;
+    public String homePhoneNum;
+    public String phoneNum;
+    public String occupation;
+    public String placeOfWork;
+    public String nif;
 
     public RegisterData() {
     }

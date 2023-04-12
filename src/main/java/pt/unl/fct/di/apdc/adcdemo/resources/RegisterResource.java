@@ -28,6 +28,14 @@ public class RegisterResource {
         return DigestUtils.sha3_512Hex(pass);
     }
 
+    private void setWithNulls(Entity.Builder eb, String name, String value) {
+        if (value == null) {
+            eb.setNull(name);
+        } else {
+            eb.set(name, value);
+        }
+    }
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response doRegister(RegisterData data) {
@@ -52,13 +60,21 @@ public class RegisterResource {
                 txn.rollback();
                 return Response.status(Response.Status.CONFLICT).entity("Conflict - username is already taken").build();
             }
-            Entity user = Entity.newBuilder(userKey)
+            Entity.Builder eb = Entity.newBuilder(userKey)
                     .set("password", hashPass(data.password))
                     .set("passConf", hashPass(data.passConf))
                     .set("email", data.email)
                     .set("name", data.name)
                     .set("creationDate", Timestamp.now())
-                    .build();
+                    .set("role", RegisterData.DEFAULT_ROLE)
+                    .set("state", RegisterData.DEFAULT_STATE);
+            setWithNulls(eb, "visibility", data.visibility);
+            setWithNulls(eb, "homePhoneNum", data.homePhoneNum);
+            setWithNulls(eb, "phoneNum", data.phoneNum);
+            setWithNulls(eb, "occupation", data.occupation);
+            setWithNulls(eb, "placeOfWork", data.placeOfWork);
+            setWithNulls(eb, "nif", data.nif);
+            Entity user = eb.build();
             txn.put(user);
             LOG.fine("Register done: " + data.username);
             txn.commit();
