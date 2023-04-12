@@ -21,6 +21,9 @@ public class RegisterData {
     public String occupation;
     public String placeOfWork;
     public String nif;
+    public String street;
+    public String locale;
+    public String zipCode;
 
     public RegisterData() {
     }
@@ -47,5 +50,9 @@ public class RegisterData {
         PasswordData passData = new PasswordData(this.password);
         RuleResult res = passValidator.validate(passData);
         return res.isValid();
+    }
+
+    public boolean validateZipCode() {
+        return this.zipCode == null || this.zipCode.matches("[0-9]{4}-[0-9]{3}");
     }
 }

@@ -49,6 +49,9 @@ public class RegisterResource {
         } else if (!data.validatePasswordConstraints()) {
             LOG.fine("Passwords dont meet constraints");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - password dont meet constraints").build();
+        } else if (!data.validateZipCode()) {
+            LOG.fine("Zip code dont meet constraints");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Zip code dont meet constraints").build();
         }
 
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
