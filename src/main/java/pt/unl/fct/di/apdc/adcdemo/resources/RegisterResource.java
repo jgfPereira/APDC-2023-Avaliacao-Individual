@@ -77,6 +77,9 @@ public class RegisterResource {
             setWithNulls(eb, "occupation", data.occupation);
             setWithNulls(eb, "placeOfWork", data.placeOfWork);
             setWithNulls(eb, "nif", data.nif);
+            setWithNulls(eb, "street", data.street);
+            setWithNulls(eb, "locale", data.locale);
+            setWithNulls(eb, "zipCode", data.zipCode);
             Entity user = eb.build();
             txn.put(user);
             LOG.fine("Register done: " + data.username);
