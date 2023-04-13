@@ -17,7 +17,7 @@
 <script>
     function getProfilePicture() {
         let divPicture = document.getElementById("picture");
-        let fileName = document.forms["getProfilePicture"]["fileName"].value;
+        let fileName = document.forms["getPicture"]["fileName"].value;
         const pictureURL = "https://storage.googleapis.com/adc-demo-383221.appspot.com/" + fileName;
         let htmlStr = '<img alt="Profile Picture" src="' + pictureURL + '"></img>';
         loadProfilePicture(divPicture, htmlStr, pictureURL)
