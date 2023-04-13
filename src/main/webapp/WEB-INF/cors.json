@@ -7,7 +7,8 @@
       "GET"
     ],
     "responseHeader": [
-      "Content-Type"
+      "Content-Type",
+      "Access-Control-Allow-Origin"
     ],
     "maxAgeSeconds": 3600
   }
