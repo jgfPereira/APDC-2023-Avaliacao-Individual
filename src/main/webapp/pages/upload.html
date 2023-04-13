@@ -18,6 +18,7 @@
                 <div>
                     Username: <input id="username" type="text"/>
                     File: <input accept="image/png, image/jpeg, image/bmp" name="files" type="file"/>
+                    <input name="fileName" type="hidden"/>
                     <input onclick='uploadFile(this)' type="submit" value="Upload picture"/>
                 </div>
             </form>
@@ -78,6 +79,7 @@
         } else {
             let request = new XMLHttpRequest();
             const newFileName = "photo_" + username + extension;
+            document.forms["putFile"]["fileName"].value = newFileName;
             request.open("POST", "/gcs/" + bucket + "/" + newFileName, false);
             request.setRequestHeader("Content-Type", file.type);
             request.send(file);
