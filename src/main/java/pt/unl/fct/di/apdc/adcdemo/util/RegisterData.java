@@ -1,5 +1,6 @@
 package pt.unl.fct.di.apdc.adcdemo.util;
 
+import org.apache.commons.validator.routines.EmailValidator;
 import org.passay.*;
 
 import java.util.ArrayList;
@@ -54,5 +55,10 @@ public class RegisterData {
 
     public boolean validateZipCode() {
         return this.zipCode == null || this.zipCode.matches("[0-9]{4}-[0-9]{3}");
+    }
+
+    //email validation based on RFC 822 standard
+    public boolean validateEmail() {
+        return EmailValidator.getInstance().isValid(this.email);
     }
 }

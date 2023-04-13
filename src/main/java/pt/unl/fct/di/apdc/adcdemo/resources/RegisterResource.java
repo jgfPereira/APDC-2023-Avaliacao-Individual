@@ -43,6 +43,9 @@ public class RegisterResource {
         if (data == null || !data.validateData()) {
             LOG.fine("Invalid data: at least one field is null");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+        } else if (!data.validateEmail()) {
+            LOG.fine("Email dont meet constraints");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Email dont meet constraints").build();
         } else if (!data.validatePasswords()) {
             LOG.fine("Passwords dont match");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Passwords dont match").build();
