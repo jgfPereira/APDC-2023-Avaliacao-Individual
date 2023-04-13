@@ -13,6 +13,10 @@ import java.util.Collections;
 @SuppressWarnings("serial")
 public class MediaResourceServlet extends HttpServlet {
 
+    public static final String BUCKET = "adc-demo-383221.appspot.com";
+    public static final String USER_PHOTO_NAME_FMT = "photo_%s";
+
+
     /**
      * Retrieves a file from GCS and returns it in the http response.
      * If the request path is /gcs/Foo/Bar this will be interpreted as
