@@ -114,11 +114,11 @@ public class RegisterResource {
                 addPhotoTxn.put(e);
                 LOG.fine("Added profile picture to user");
                 addPhotoTxn.commit();
-                return Response.ok("Profile picture added").build();
+                return Response.ok("Register done - Profile picture added").build();
             } else {
                 LOG.info("User didnt give profile picture");
                 addPhotoTxn.commit();
-                return Response.ok("User didnt give profile picture").build();
+                return Response.ok("Register done - User didnt give profile picture").build();
             }
         } catch (Exception e) {
             addPhotoTxn.rollback();
