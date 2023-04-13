@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 public class RegisterResource {
 
     private static final Logger LOG = Logger.getLogger(RegisterResource.class.getName());
-    //    private final Gson g = new Gson();
     private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
     public RegisterResource() {
