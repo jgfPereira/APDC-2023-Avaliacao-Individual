@@ -9,20 +9,29 @@
         <h1>Get Profile Picture</h1>
         <div>File Name: <input id="fileName" name="fileName" type="text"/></div>
         <br>
-        <input onclick="getImage(this)" type="submit" value="Get picture"/>
+        <input onclick="getPicture(this)" type="submit" value="Get picture"/>
     </div>
     <br>
     <div id="picture"></div>
 </form>
 <script>
-    function getImage() {
+    function getPicture() {
         let divPicture = document.getElementById("picture");
         let fileName = document.forms["getPicture"]["fileName"].value;
-        let htmlStr =
-            '<img alt="Profile Picture" src="https://storage.googleapis.com/adc-demo-383221.appspot.com/' +
-            fileName +
-            '"></img>';
-        divPicture.innerHTML = htmlStr;
+        const pictureURL = "https://storage.googleapis.com/adc-demo-383221.appspot.com/" + fileName;
+        let htmlStr = '<img alt="Profile Picture" src="' + pictureURL + '"></img>';
+        loadPicture(divPicture, htmlStr, pictureURL)
+    }
+
+    function loadPicture(divID, htmlStr, pictureURL) {
+        const xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById(divID).innerHTML = htmlStr;
+            }
+        };
+        xhttp.open("GET", pictureURL);
+        xhttp.send(null);
     }
 </script>
 </body>
