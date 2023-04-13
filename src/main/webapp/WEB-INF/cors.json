@@ -1,0 +1,14 @@
+[
+  {
+    "origin": [
+      "https://adc-demo-383221.oa.r.appspot.com/"
+    ],
+    "method": [
+      "GET"
+    ],
+    "responseHeader": [
+      "Content-Type"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
