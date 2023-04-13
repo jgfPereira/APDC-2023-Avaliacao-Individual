@@ -117,6 +117,7 @@ public class RegisterResource {
                 return Response.ok("Profile picture added").build();
             } else {
                 LOG.info("User didnt give profile picture");
+                addPhotoTxn.commit();
                 return Response.ok("User didnt give profile picture").build();
             }
         } catch (Exception e) {
