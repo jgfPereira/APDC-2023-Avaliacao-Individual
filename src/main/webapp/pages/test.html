@@ -1,7 +1,29 @@
+<!DOCTYPE html>
 <html>
+<head>
+    <title>Test Profile Picture</title>
+</head>
 <body>
-<img alt="Cant read from GAE"
-     src="https://storage.googleapis.com/adc-demo-383221.appspot.com/image.jpg"></img> <br>
-<img alt="Cant read locally" src=https://storage.googleapis.com/adc-demo-383221.appspot.com/image.jpg></img>
+<form action="/pages/test.html" method="get" name="getPicture">
+    <div id="container">
+        <h1>Get Profile Picture</h1>
+        <div>File Name: <input id="fileName" name="fileName" type="text"/></div>
+        <br>
+        <input onclick="getImage(this)" type="submit" value="Get picture"/>
+    </div>
+    <br>
+    <div id="picture"></div>
+</form>
+<script>
+    function getImage() {
+        let divPicture = document.getElementById("picture");
+        let fileName = document.forms["getPicture"]["fileName"].value;
+        let htmlStr =
+            '<img alt="Profile Picture" src="https://storage.googleapis.com/adc-demo-383221.appspot.com/' +
+            fileName +
+            '"></img>';
+        divPicture.innerHTML = htmlStr;
+    }
+</script>
 </body>
 </html>
