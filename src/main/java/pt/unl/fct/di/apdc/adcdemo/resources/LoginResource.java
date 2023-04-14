@@ -11,7 +11,10 @@ import pt.unl.fct.di.apdc.adcdemo.util.AuthToken;
 import pt.unl.fct.di.apdc.adcdemo.util.LoginData;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -34,57 +37,41 @@ public class LoginResource {
     public LoginResource() {
     }
 
-    @POST
-    @Path("/v1")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response doLogin(LoginData data) {
-        LOG.fine("Login attempt by user: " + data.username);
-        Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
-        Entity personOnDB = datastore.get(userKey);
-        if (personOnDB != null) {
-            final String givenPasswordHash = DigestUtils.sha3_512Hex(data.password);
-            if (personOnDB.getString("password").equals(givenPasswordHash)) {
-                LOG.fine("Password is correct. Generating token...");
-                AuthToken at = new AuthToken(data.username);
-                return Response.ok(g.toJson(at)).build();
-            } else {
-                LOG.fine("Wrong password");
-                return Response.status(Status.FORBIDDEN).entity("Incorrect password.").build();
-            }
-        } else {
-            LOG.fine("User does not exist");
-            return Response.status(Status.FORBIDDEN).entity("Incorrect username.").build();
-        }
+    private String hashPass(String pass) {
+        return DigestUtils.sha3_512Hex(pass);
     }
 
     @POST
-    @Path("/v2")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response doLoginV2(LoginData data, @Context HttpHeaders headers, @Context HttpServletRequest request) {
-        LOG.fine("Login attempt by user: " + data.username);
+    public Response doLogin(LoginData data, @Context HttpHeaders headers, @Context HttpServletRequest request) {
+        LOG.fine("Login attempt by user " + data.username);
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
         Key loginRegistryKey = datastore.newKeyFactory().addAncestors(PathElement.of("User", data.username))
                 .setKind("LoginRegistry").newKey("loginReg");
         Key loginLogKey = datastore.allocateId(datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", data.username)).setKind("LoginLog").newKey());
-
-        Transaction t = datastore.newTransaction();
+        Key loginAuthTokenKey = datastore.newKeyFactory().addAncestors(PathElement.of("LoginLog", loginLogKey.getId()))
+                .setKind("AuthToken").newKey("authToken");
+        Transaction txn = datastore.newTransaction();
         try {
-            Entity personOnDB = t.get(userKey);
-            if (personOnDB != null) {
-                Entity loginRegistry = t.get(loginRegistryKey);
+            Entity userOnDB = txn.get(userKey);
+            if (userOnDB != null) {
+                Entity loginRegistry = txn.get(loginRegistryKey);
                 if (loginRegistry == null) {
                     // creating for the first time
-                    loginRegistry = Entity.newBuilder(loginRegistryKey).set("sucess_logins", 0).set("fail_logins", 0)
-                            .set("first_login", Timestamp.now()).set("last_login", Timestamp.now()).build();
+                    loginRegistry = Entity.newBuilder(loginRegistryKey)
+                            .set("success_logins", 0L)
+                            .set("fail_logins", 0L)
+                            .set("first_login", Timestamp.now())
+                            .set("last_login", Timestamp.now())
+                            .setNull("last_attempt")
+                            .build();
                 }
-
-                final String givenPasswordHash = DigestUtils.sha3_512Hex(data.password);
-                if (personOnDB.getString("password").equals(givenPasswordHash)) {
-                    LOG.fine("Password is correct. Generating token...");
-                    AuthToken at = new AuthToken(data.username);
-
-                    Entity loginLog = Entity.newBuilder(loginLogKey).set("login_ip", request.getRemoteAddr())
+                final String givenPasswordHash = hashPass(data.password);
+                if (userOnDB.getString("password").equals(givenPasswordHash)) {
+                    AuthToken tokenAuth = new AuthToken(data.username);
+                    Entity loginLog = Entity.newBuilder(loginLogKey)
+                            .set("login_ip", request.getRemoteAddr())
                             .set("login_host", request.getRemoteHost())
                             .set("login_country", headers.getHeaderString("X-AppEngine-Country"))
                             .set("login_city", headers.getHeaderString("X-AppEngine-City"))
@@ -93,58 +80,66 @@ public class LoginResource {
                                     StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
                                             .setExcludeFromIndexes(true).build())
                             .build();
-
                     Entity loginRegistryNew = Entity.newBuilder(loginRegistryKey)
-                            .set("sucess_logins", 1 + loginRegistry.getLong("sucess_logins"))
+                            .set("success_logins", 1 + loginRegistry.getLong("success_logins"))
                             .set("fail_logins", loginRegistry.getLong("fail_logins"))
                             .set("first_login", loginRegistry.getTimestamp("first_login"))
-                            .set("last_login", Timestamp.now()).build();
-
-                    t.put(loginLog, loginRegistryNew);
-                    t.commit();
-                    return Response.ok(g.toJson(at)).build();
+                            .set("last_login", Timestamp.now())
+                            .set("last_attempt", loginRegistry.getTimestamp("last_attempt"))
+                            .build();
+                    Entity loginAuthToken = Entity.newBuilder(loginAuthTokenKey)
+                            .set("tokenID", tokenAuth.tokenID)
+                            .set("username", tokenAuth.username)
+                            .set("creationDate", tokenAuth.creationDate)
+                            .set("expirationDate", tokenAuth.expirationDate)
+                            .build();
+                    LOG.fine("Password is correct - Generated token and logs");
+                    txn.put(loginLog, loginRegistryNew, loginAuthToken);
+                    txn.commit();
+                    return Response.ok(g.toJson(tokenAuth.tokenID)).build();
                 } else {
-                    LOG.fine("Wrong password");
                     Entity loginRegistryNew = Entity.newBuilder(loginRegistryKey)
-                            .set("sucess_logins", loginRegistry.getLong("sucess_logins"))
+                            .set("success_logins", loginRegistry.getLong("success_logins"))
                             .set("fail_logins", 1 + loginRegistry.getLong("fail_logins"))
                             .set("first_login", loginRegistry.getTimestamp("first_login"))
                             .set("last_login", loginRegistry.getTimestamp("last_login"))
                             .set("last_attempt", Timestamp.now()).build();
-
-                    t.put(loginRegistryNew);
-                    t.commit();
-                    return Response.status(Status.FORBIDDEN).entity("Incorrect password.").build();
+                    LOG.fine("Wrong password");
+                    txn.put(loginRegistryNew);
+                    txn.commit();
+                    return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
                 }
             } else {
                 LOG.fine("User does not exist");
-                return Response.status(Status.FORBIDDEN).entity("Incorrect username.").build();
+                return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
             }
-
         } catch (Exception e) {
-            t.rollback();
+            txn.rollback();
             LOG.fine(e.getLocalizedMessage());
             return Response.status(500, "Server Error").build();
         } finally {
-            if (t.isActive()) {
-                t.rollback();
+            if (txn.isActive()) {
+                txn.rollback();
                 return Response.status(500, "Server Error").build();
             }
         }
-
     }
 
     @POST
-    @Path("/user")
+    @Path("/history")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response getLoginTimes(LoginData data) {
+    public Response doLoginTimes(LoginData data) {
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
-        Entity personOnDB = datastore.get(userKey);
-        if (personOnDB != null && personOnDB.getString("password").equals(DigestUtils.sha3_512Hex(data.password))) {
+        Entity userOnDB = datastore.get(userKey);
+        if (userOnDB == null) {
+            LOG.fine("User dont exist");
+            return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
+        }
+        // use token instead
+        if (userOnDB.getString("password").equals(hashPass(data.password))) {
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, -1);
             Timestamp yesterday = Timestamp.of(cal.getTime());
-
             Query<Entity> query = Query.newEntityQueryBuilder()
                     .setKind("LoginLog")
                     .setFilter(CompositeFilter.and(
@@ -153,7 +148,6 @@ public class LoginResource {
                     .setOrderBy(OrderBy.desc("login_time"))
                     .setLimit(3)
                     .build();
-
             QueryResults<Entity> logs = datastore.run(query);
             List<Date> loginTimes = new ArrayList<>();
             logs.forEachRemaining(userLog -> {
@@ -161,19 +155,8 @@ public class LoginResource {
             });
             return Response.ok(g.toJson(loginTimes)).build();
         } else {
-            LOG.fine("User does not exist or password does not match.");
-            return Response.status(Status.FORBIDDEN).entity("User does not exist or password does not match.").build();
-        }
-    }
-
-    @GET
-    @Path("/{username}")
-    public Response isUsernameAvailable(@PathParam("username") String username) {
-        Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
-        if (userKey != null) {
-            return Response.ok().entity(g.toJson(false)).build();
-        } else {
-            return Response.ok().entity(g.toJson(true)).build();
+            LOG.fine("Wrong password");
+            return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
         }
     }
 }

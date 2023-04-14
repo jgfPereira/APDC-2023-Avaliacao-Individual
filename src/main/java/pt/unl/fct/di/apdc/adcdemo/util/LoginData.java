@@ -6,4 +6,8 @@ public class LoginData {
 
     public LoginData() {
     }
+
+    public boolean validateData() {
+        return !(this.username == null || this.password == null);
+    }
 }
