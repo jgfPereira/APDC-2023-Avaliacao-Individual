@@ -25,7 +25,7 @@ public class UpdateResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response doList(UpdateData data) {
+    public Response doUpdate(UpdateData data) {
         LOG.fine("User attempt to update attribute");
         if (data == null || !data.validateData()) {
             LOG.fine("Invalid data: at least one field is null");
@@ -80,6 +80,5 @@ public class UpdateResource {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
             }
         }
-
     }
 }
