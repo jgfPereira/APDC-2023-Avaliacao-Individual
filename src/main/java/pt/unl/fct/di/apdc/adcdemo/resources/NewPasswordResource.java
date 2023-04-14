@@ -33,6 +33,9 @@ public class NewPasswordResource {
         if (data == null || !data.validateData()) {
             LOG.fine("Invalid data: at least one field is null");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+        } else if (!data.validateChanger()) {
+            LOG.fine("Cant change others password");
+            return Response.status(Response.Status.FORBIDDEN).entity("Forbidden - Cant change others password").build();
         }
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
         Transaction txn = datastore.newTransaction();

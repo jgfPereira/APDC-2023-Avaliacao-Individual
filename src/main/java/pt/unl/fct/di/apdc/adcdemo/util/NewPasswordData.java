@@ -8,6 +8,7 @@ import java.util.List;
 public class NewPasswordData {
 
     public String username;
+    public String passChangerUsername;
     public String password;
     public String newPassword;
     public String newPasswordConf;
@@ -16,11 +17,15 @@ public class NewPasswordData {
     }
 
     public boolean validateData() {
-        return !(this.username == null || this.password == null || this.newPassword == null || this.newPasswordConf == null);
+        return !(this.username == null || this.passChangerUsername == null || this.password == null || this.newPassword == null || this.newPasswordConf == null);
     }
 
     public boolean validatePasswords() {
         return this.newPassword.equals(this.newPasswordConf);
+    }
+
+    public boolean validateChanger() {
+        return this.username.equals(this.passChangerUsername);
     }
 
     public boolean validatePasswordConstraints() {
