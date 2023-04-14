@@ -18,9 +18,48 @@ public class RolePermissions {
         return contains(removerRole, removedRole);
     }
 
-    private static boolean contains(String removerRole, String removedRole) {
+    public static boolean canUpdate(UpdateData data, String updaterRole, String updatedRole, String attributeName, String attributeValue) {
+        // the key (username) of and entity cannot change after its created
+        if (attributeName == "creationDate") {
+            return false;
+        }
+        if (data.isSameUser()) {
+            if (updaterRole.equals(USER_ROLE)) {
+                return !(attributeName.equals("email") || attributeName.equals("name") || attributeName.equals("role") || attributeName.equals("state"));
+            } else if (updaterRole.equals(GBO_ROLE) || updaterRole.equals(GA_ROLE) || updaterRole.equals(GS_ROLE)) {
+                return !(attributeName.equals("role") || attributeName.equals("state"));
+            } else if (updaterRole.equals(SU_ROLE)) {
+                return true;
+            } else {
+                //unrecognized role
+                return false;
+            }
+        }
+        boolean roleBasicPerms = contains(updaterRole, updatedRole);
+        if (!roleBasicPerms) {
+            return false;
+        }
+        if (updaterRole.equals(GBO_ROLE)) {
+            return !attributeName.equals("role");
+        } else if (updaterRole.equals(GA_ROLE)) {
+            return !attributeName.equals("role");
+        } else if (updaterRole.equals(GS_ROLE)) {
+            if (attributeName.equals("role")) {
+                return updatedRole.equals(USER_ROLE) && attributeValue.equals(GBO_ROLE);
+            } else {
+                return true;
+            }
+        } else if (updaterRole.equals(SU_ROLE)) {
+            return true;
+        } else {
+            //unrecognized role
+            return false;
+        }
+    }
+
+    private static boolean contains(String fatherRole, String childRole) {
         String[] tmp = null;
-        switch (removerRole) {
+        switch (fatherRole) {
             case USER_ROLE:
                 return false;
             case GBO_ROLE:
@@ -40,7 +79,7 @@ public class RolePermissions {
             return false;
         }
         for (String s : tmp) {
-            if (s.equals(removedRole)) {
+            if (s.equals(childRole)) {
                 return true;
             }
         }

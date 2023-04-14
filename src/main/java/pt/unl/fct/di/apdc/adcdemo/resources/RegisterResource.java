@@ -109,7 +109,8 @@ public class RegisterResource {
             String photoName = String.format(MediaResourceServlet.USER_PHOTO_NAME_FMT, data.username);
             Blob blob = storage.get(BlobId.of(MediaResourceServlet.BUCKET, photoName));
             if (blob != null) {
-                Entity e = Entity.newBuilder(userKey).set("photo", photoName).build();
+                Entity.Builder userChangedBuilder = Entity.newBuilder(txn.get(userKey)).set("photo", photoName);
+                Entity e = userChangedBuilder.build();
                 addPhotoTxn.put(e);
                 LOG.fine("Added profile picture to user");
                 addPhotoTxn.commit();
