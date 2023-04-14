@@ -68,6 +68,7 @@ public class LoginResource {
                             .build();
                 }
                 final String givenPasswordHash = hashPass(data.password);
+                //headers.getHeaderString("X-AppEngine-CityLatLong")
                 if (userOnDB.getString("password").equals(givenPasswordHash)) {
                     AuthToken tokenAuth = new AuthToken(data.username);
                     Entity loginLog = Entity.newBuilder(loginLogKey)
@@ -77,7 +78,7 @@ public class LoginResource {
                             .set("login_city", headers.getHeaderString("X-AppEngine-City"))
                             .set("login_time", Timestamp.now())
                             .set("login_coordinates",
-                                    StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
+                                    StringValue.newBuilder(request.getHeader("X-AppEngine-CityLatLong"))
                                             .setExcludeFromIndexes(true).build())
                             .build();
                     Entity loginRegistryNew = Entity.newBuilder(loginRegistryKey)
