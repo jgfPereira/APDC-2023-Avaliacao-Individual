@@ -2,11 +2,11 @@ package pt.unl.fct.di.apdc.adcdemo.util;
 
 public class RolePermissions {
 
-    private static final String USER_ROLE = "USER";
-    private static final String GBO_ROLE = "GBO";
-    private static final String GA_ROLE = "GA";
-    private static final String GS_ROLE = "GS";
-    private static final String SU_ROLE = "SU";
+    public static final String USER_ROLE = "USER";
+    public static final String GBO_ROLE = "GBO";
+    public static final String GA_ROLE = "GA";
+    public static final String GS_ROLE = "GS";
+    public static final String SU_ROLE = "SU";
 
     public static final String[] USER_PERMS = {};
     public static final String[] GBO_PERMS = {USER_ROLE};
