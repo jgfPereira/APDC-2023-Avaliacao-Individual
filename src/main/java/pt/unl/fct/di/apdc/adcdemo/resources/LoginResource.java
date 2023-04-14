@@ -68,7 +68,6 @@ public class LoginResource {
                             .build();
                 }
                 final String givenPasswordHash = hashPass(data.password);
-                //headers.getHeaderString("X-AppEngine-CityLatLong")
                 if (userOnDB.getString("password").equals(givenPasswordHash)) {
                     AuthToken tokenAuth = new AuthToken(data.username);
                     Entity loginLog = Entity.newBuilder(loginLogKey)
@@ -77,16 +76,9 @@ public class LoginResource {
                             .set("login_country", headers.getHeaderString("X-AppEngine-Country"))
                             .set("login_city", headers.getHeaderString("X-AppEngine-City"))
                             .set("login_time", Timestamp.now())
-                            .set("login_coordinates",
-                                    StringValue.newBuilder(request.getHeader("X-AppEngine-CityLatLong"))
+                            .set("login_coords",
+                                    StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
                                             .setExcludeFromIndexes(true).build())
-                            .build();
-                    Entity loginRegistryNew = Entity.newBuilder(loginRegistryKey)
-                            .set("success_logins", 1 + loginRegistry.getLong("success_logins"))
-                            .set("fail_logins", loginRegistry.getLong("fail_logins"))
-                            .set("first_login", loginRegistry.getTimestamp("first_login"))
-                            .set("last_login", Timestamp.now())
-                            .set("last_attempt", loginRegistry.getTimestamp("last_attempt"))
                             .build();
                     Entity loginAuthToken = Entity.newBuilder(loginAuthTokenKey)
                             .set("tokenID", tokenAuth.tokenID)
@@ -94,17 +86,21 @@ public class LoginResource {
                             .set("creationDate", tokenAuth.creationDate)
                             .set("expirationDate", tokenAuth.expirationDate)
                             .build();
+                    Entity.Builder loginRegistryBuilder = Entity.newBuilder(loginRegistry);
+                    loginRegistryBuilder
+                            .set("success_logins", 1 + loginRegistry.getLong("success_logins"))
+                            .set("last_login", Timestamp.now());
+                    Entity loginRegistryNew = loginRegistryBuilder.build();
                     LOG.fine("Password is correct - Generated token and logs");
                     txn.put(loginLog, loginRegistryNew, loginAuthToken);
                     txn.commit();
                     return Response.ok(g.toJson(tokenAuth.tokenID)).build();
                 } else {
-                    Entity loginRegistryNew = Entity.newBuilder(loginRegistryKey)
-                            .set("success_logins", loginRegistry.getLong("success_logins"))
+                    Entity.Builder loginRegistryBuilder = Entity.newBuilder(loginRegistry);
+                    loginRegistryBuilder
                             .set("fail_logins", 1 + loginRegistry.getLong("fail_logins"))
-                            .set("first_login", loginRegistry.getTimestamp("first_login"))
-                            .set("last_login", loginRegistry.getTimestamp("last_login"))
-                            .set("last_attempt", Timestamp.now()).build();
+                            .set("last_attempt", Timestamp.now());
+                    Entity loginRegistryNew = loginRegistryBuilder.build();
                     LOG.fine("Wrong password");
                     txn.put(loginRegistryNew);
                     txn.commit();
@@ -117,11 +113,11 @@ public class LoginResource {
         } catch (Exception e) {
             txn.rollback();
             LOG.fine(e.getLocalizedMessage());
-            return Response.status(500, "Server Error").build();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
         } finally {
             if (txn.isActive()) {
                 txn.rollback();
-                return Response.status(500, "Server Error").build();
+                return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
             }
         }
     }
