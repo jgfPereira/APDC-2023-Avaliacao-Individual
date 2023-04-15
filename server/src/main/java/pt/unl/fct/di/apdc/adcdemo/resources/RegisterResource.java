@@ -6,6 +6,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
 import pt.unl.fct.di.apdc.adcdemo.servlets.MediaResourceServlet;
 import pt.unl.fct.di.apdc.adcdemo.util.RegisterData;
@@ -24,6 +25,7 @@ public class RegisterResource {
 
     private static final Logger LOG = Logger.getLogger(RegisterResource.class.getName());
     private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+    private final Gson g = new Gson();
 
     public RegisterResource() {
     }
@@ -46,19 +48,19 @@ public class RegisterResource {
         LOG.fine("User attempt to register");
         if (data == null || !data.validateData()) {
             LOG.fine("Invalid data: at least one field is null");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
         } else if (!data.validateEmail()) {
             LOG.fine("Email dont meet constraints");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Email dont meet constraints").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Email dont meet constraints")).build();
         } else if (!data.validatePasswords()) {
             LOG.fine("Passwords dont match");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Passwords dont match").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Passwords dont match")).build();
         } else if (!data.validatePasswordConstraints()) {
             LOG.fine("Passwords dont meet constraints");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - password dont meet constraints").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - password dont meet constraints")).build();
         } else if (!data.validateZipCode()) {
             LOG.fine("Zip code dont meet constraints");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Zip code dont meet constraints").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Zip code dont meet constraints")).build();
         }
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
         Transaction txn = datastore.newTransaction();
@@ -67,7 +69,7 @@ public class RegisterResource {
             if (userOnDB != null) {
                 LOG.fine("User already exists");
                 txn.rollback();
-                return Response.status(Response.Status.CONFLICT).entity("Conflict - username is already taken").build();
+                return Response.status(Response.Status.CONFLICT).entity(g.toJson("Conflict - username is already taken")).build();
             }
             Entity.Builder eb = Entity.newBuilder(userKey)
                     .set("password", hashPass(data.password))
@@ -93,11 +95,11 @@ public class RegisterResource {
         } catch (Exception e) {
             txn.rollback();
             LOG.severe(e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
         } finally {
             if (txn.isActive()) {
                 txn.rollback();
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
         //associate photo with user (if any)
@@ -112,20 +114,20 @@ public class RegisterResource {
                 addPhotoTxn.put(e);
                 LOG.fine("Added profile picture to user");
                 addPhotoTxn.commit();
-                return Response.ok("Register done - Profile picture added").build();
+                return Response.ok(g.toJson("Register done - Profile picture added")).build();
             } else {
                 LOG.info("User didnt give profile picture");
                 addPhotoTxn.commit();
-                return Response.ok("Register done - User didnt give profile picture").build();
+                return Response.ok(g.toJson("Register done - User didnt give profile picture")).build();
             }
         } catch (Exception e) {
             addPhotoTxn.rollback();
             LOG.severe(e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
         } finally {
             if (addPhotoTxn.isActive()) {
                 addPhotoTxn.rollback();
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
     }

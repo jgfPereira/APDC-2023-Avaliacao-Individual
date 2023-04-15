@@ -23,6 +23,7 @@ public class LogoutResource {
 
     private static final Logger LOG = Logger.getLogger(LogoutResource.class.getName());
     private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+    private final Gson g = new Gson();
 
     public LogoutResource() {
     }
@@ -34,12 +35,12 @@ public class LogoutResource {
         String username = null;
         if (jsonObj == null) {
             LOG.fine("Invalid data");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
         } else {
             JsonElement jsonElement = jsonObj.get("username");
             if (jsonElement == null) {
                 LOG.fine("Invalid data");
-                return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
             }
             username = jsonElement.getAsString();
         }
@@ -47,7 +48,7 @@ public class LogoutResource {
         String headerToken = AuthToken.getAuthHeader(request);
         if (headerToken == null) {
             LOG.fine("Wrong credentials/token - no auth header or invalid auth type");
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
         }
         Key loginAuthTokenKey = datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey(headerToken);
@@ -57,13 +58,13 @@ public class LogoutResource {
             if (tokenOnDB == null) {
                 LOG.fine("Wrong credentials/token - not found");
                 txn.rollback();
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
             } else {
                 boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
                 if (!isTokenValid) {
                     LOG.fine("Expired token");
                     txn.rollback();
-                    return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                    return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
                 }
                 LOG.fine("Valid token - proceeding");
             }
@@ -71,7 +72,7 @@ public class LogoutResource {
             if (userOnDB == null) {
                 LOG.fine("User dont exist");
                 txn.rollback();
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Wrong credentials").build();
+                return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Wrong credentials")).build();
             }
             Entity.Builder tokenChangedBuilder = Entity.newBuilder(tokenOnDB);
             tokenChangedBuilder.set("isRevoked", true);
@@ -79,15 +80,15 @@ public class LogoutResource {
             txn.put(tokenChanged);
             txn.commit();
             LOG.fine("Logout was successful - token revoked");
-            return Response.ok("Logout was successful").build();
+            return Response.ok(g.toJson("Logout was successful")).build();
         } catch (Exception e) {
             txn.rollback();
             LOG.severe(e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
         } finally {
             if (txn.isActive()) {
                 txn.rollback();
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
     }

@@ -1,6 +1,7 @@
 package pt.unl.fct.di.apdc.adcdemo.resources;
 
 import com.google.cloud.datastore.*;
+import com.google.gson.Gson;
 import pt.unl.fct.di.apdc.adcdemo.util.AuthToken;
 import pt.unl.fct.di.apdc.adcdemo.util.UpdateData;
 
@@ -23,6 +24,7 @@ public class UpdateResource {
 
     private static final Logger LOG = Logger.getLogger(UpdateResource.class.getName());
     private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+    private final Gson g = new Gson();
 
     public UpdateResource() {
     }
@@ -33,14 +35,14 @@ public class UpdateResource {
         LOG.fine("User attempt to update attribute");
         if (data == null || !data.validateData()) {
             LOG.fine("Invalid data: at least one field is null");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
         }
         Key updaterUserKey = datastore.newKeyFactory().setKind("User").newKey(data.updaterUsername);
         Key updatedUserKey = datastore.newKeyFactory().setKind("User").newKey(data.updatedUsername);
         String headerToken = AuthToken.getAuthHeader(request);
         if (headerToken == null) {
             LOG.fine("Wrong credentials/token - no auth header or invalid auth type");
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
         }
         Key loginAuthTokenKey = datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", data.updaterUsername)).setKind("AuthToken").newKey(headerToken);
@@ -50,13 +52,13 @@ public class UpdateResource {
             if (tokenOnDB == null) {
                 LOG.fine("Wrong credentials/token - not found");
                 txn.rollback();
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
             } else {
                 boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
                 if (!isTokenValid) {
                     LOG.fine("Expired token");
                     txn.rollback();
-                    return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                    return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
                 }
                 LOG.fine("Valid token - proceeding");
             }
@@ -65,7 +67,7 @@ public class UpdateResource {
             if (updaterOnDB == null || updatedOnDB == null) {
                 LOG.fine("At least one of the users dont exist");
                 txn.rollback();
-                return Response.status(Response.Status.NOT_FOUND).entity("Not Found - At least one of the users dont exist").build();
+                return Response.status(Response.Status.NOT_FOUND).entity(g.toJson("Not Found - At least one of the users dont exist")).build();
             }
             final String updaterRole = updaterOnDB.getString("role");
             final String updatedRole = updatedOnDB.getString("role");
@@ -85,7 +87,7 @@ public class UpdateResource {
             if (forbiddenUpdates.isEmpty()) {
                 LOG.fine("Updated all attributes");
                 txn.commit();
-                return Response.ok("Updated all attributes").build();
+                return Response.ok(g.toJson("Updated all attributes")).build();
             } else {
                 StringBuilder sb = new StringBuilder();
                 for (String s : forbiddenUpdates) {
@@ -93,16 +95,16 @@ public class UpdateResource {
                 }
                 LOG.fine("Some properties were not updated because of lack of permissions");
                 txn.commit();
-                return Response.ok("Some properties were not updated because of lack of permissions: " + sb).build();
+                return Response.ok(g.toJson("Some properties were not updated because of lack of permissions: " + sb)).build();
             }
         } catch (Exception e) {
             txn.rollback();
             LOG.severe(e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
         } finally {
             if (txn.isActive()) {
                 txn.rollback();
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
     }

@@ -107,20 +107,20 @@ public class LoginResource {
                     LOG.fine("Wrong password");
                     txn.put(loginRegistryNew);
                     txn.commit();
-                    return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
+                    return Response.status(Status.UNAUTHORIZED).entity(g.toJson("Wrong credentials")).build();
                 }
             } else {
                 LOG.fine("User does not exist");
-                return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
+                return Response.status(Status.UNAUTHORIZED).entity(g.toJson("Wrong credentials")).build();
             }
         } catch (Exception e) {
             txn.rollback();
             LOG.fine(e.getLocalizedMessage());
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
         } finally {
             if (txn.isActive()) {
                 txn.rollback();
-                return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
+                return Response.status(Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
     }
@@ -133,12 +133,12 @@ public class LoginResource {
         String username = null;
         if (jsonObj == null) {
             LOG.fine("Invalid data");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
         } else {
             JsonElement jsonElement = jsonObj.get("username");
             if (jsonElement == null) {
                 LOG.fine("Invalid data");
-                return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
             }
             username = jsonElement.getAsString();
         }
@@ -146,26 +146,26 @@ public class LoginResource {
         String headerToken = AuthToken.getAuthHeader(request);
         if (headerToken == null) {
             LOG.fine("Wrong credentials/token - no auth header or invalid auth type");
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
         }
         Key loginAuthTokenKey = datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey(headerToken);
         Entity tokenOnDB = datastore.get(loginAuthTokenKey);
         if (tokenOnDB == null) {
             LOG.fine("Wrong credentials/token - not found");
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
         } else {
             boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
             if (!isTokenValid) {
                 LOG.fine("Expired token");
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                return Response.status(Response.Status.UNAUTHORIZED).entity(g.toJson("Invalid credentials")).build();
             }
             LOG.fine("Valid token - proceeding");
         }
         Entity userOnDB = datastore.get(userKey);
         if (userOnDB == null) {
             LOG.fine("User dont exist");
-            return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
+            return Response.status(Status.UNAUTHORIZED).entity(g.toJson("Wrong credentials")).build();
         }
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
