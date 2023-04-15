@@ -53,7 +53,7 @@ public class ComputationResource {
     @POST
     @Path("/compute")
     public Response executeComputeTask() {
-        LOG.fine("Starting to execute computation taks");
+        LOG.fine("Starting to execute computation task");
         try {
             Thread.sleep(60 * 1000 * 10); // 10 min
         } catch (Exception e) {

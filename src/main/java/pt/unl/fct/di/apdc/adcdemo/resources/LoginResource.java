@@ -6,6 +6,8 @@ import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.codec.digest.DigestUtils;
 import pt.unl.fct.di.apdc.adcdemo.util.AuthToken;
 import pt.unl.fct.di.apdc.adcdemo.util.LoginData;
@@ -125,35 +127,61 @@ public class LoginResource {
     @POST
     @Path("/history")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response doLoginTimes(LoginData data) {
-        Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
+    public Response doLoginTimes(String usernameJSON, @Context HttpHeaders headers, @Context HttpServletRequest request) {
+        JsonObject jsonObj = new Gson().fromJson(usernameJSON, JsonObject.class);
+        String username = null;
+        if (jsonObj == null) {
+            LOG.fine("Invalid data");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+        } else {
+            JsonElement jsonElement = jsonObj.get("username");
+            if (jsonElement == null) {
+                LOG.fine("Invalid data");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            }
+            username = jsonElement.getAsString();
+        }
+        Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
+        String headerToken = AuthToken.getAuthHeader(request);
+        if (headerToken == null) {
+            LOG.fine("Wrong credentials/token - no auth header or invalid auth type");
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+        }
+        Key loginAuthTokenKey = datastore.newKeyFactory()
+                .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey(headerToken);
+        Entity tokenOnDB = datastore.get(loginAuthTokenKey);
+        if (tokenOnDB == null) {
+            LOG.fine("Wrong credentials/token - not found");
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+        } else {
+            boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"));
+            if (!isTokenValid) {
+                LOG.fine("Expired token");
+                return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            }
+            LOG.fine("Valid token - proceeding");
+        }
         Entity userOnDB = datastore.get(userKey);
         if (userOnDB == null) {
             LOG.fine("User dont exist");
             return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
         }
-        // use token instead
-        if (userOnDB.getString("password").equals(hashPass(data.password))) {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DATE, -1);
-            Timestamp yesterday = Timestamp.of(cal.getTime());
-            Query<Entity> query = Query.newEntityQueryBuilder()
-                    .setKind("LoginLog")
-                    .setFilter(CompositeFilter.and(
-                            PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("User").newKey(data.username)),
-                            PropertyFilter.ge("login_time", yesterday)))
-                    .setOrderBy(OrderBy.desc("login_time"))
-                    .setLimit(3)
-                    .build();
-            QueryResults<Entity> logs = datastore.run(query);
-            List<Date> loginTimes = new ArrayList<>();
-            logs.forEachRemaining(userLog -> {
-                loginTimes.add(userLog.getTimestamp("login_time").toDate());
-            });
-            return Response.ok(g.toJson(loginTimes)).build();
-        } else {
-            LOG.fine("Wrong password");
-            return Response.status(Status.UNAUTHORIZED).entity("Wrong credentials").build();
-        }
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        Timestamp yesterday = Timestamp.of(cal.getTime());
+        Query<Entity> query = Query.newEntityQueryBuilder()
+                .setKind("LoginLog")
+                .setFilter(CompositeFilter.and(
+                        PropertyFilter.hasAncestor(userKey),
+                        PropertyFilter.ge("login_time", yesterday)))
+                .setOrderBy(OrderBy.desc("login_time"))
+                .setLimit(3)
+                .build();
+        QueryResults<Entity> logs = datastore.run(query);
+        List<Date> loginTimes = new ArrayList<>();
+        logs.forEachRemaining(userLog -> {
+            loginTimes.add(userLog.getTimestamp("login_time").toDate());
+        });
+        return Response.ok(g.toJson(loginTimes)).build();
     }
 }

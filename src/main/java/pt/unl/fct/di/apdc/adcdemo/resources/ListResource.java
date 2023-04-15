@@ -4,6 +4,7 @@ import com.google.cloud.datastore.*;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import pt.unl.fct.di.apdc.adcdemo.util.AuthToken;
 import pt.unl.fct.di.apdc.adcdemo.util.RolePermissions;
@@ -34,7 +35,19 @@ public class ListResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response doList(String usernameJSON, @Context HttpHeaders headers, @Context HttpServletRequest request) {
-        String username = new Gson().fromJson(usernameJSON, JsonObject.class).get("username").getAsString();
+        JsonObject jsonObj = new Gson().fromJson(usernameJSON, JsonObject.class);
+        String username = null;
+        if (jsonObj == null) {
+            LOG.fine("Invalid data");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+        } else {
+            JsonElement jsonElement = jsonObj.get("username");
+            if (jsonElement == null) {
+                LOG.fine("Invalid data");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Invalid data").build();
+            }
+            username = jsonElement.getAsString();
+        }
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
         String headerToken = AuthToken.getAuthHeader(request);
         if (headerToken == null) {

@@ -60,7 +60,6 @@ public class RegisterResource {
             LOG.fine("Zip code dont meet constraints");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad Request - Zip code dont meet constraints").build();
         }
-
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
         Transaction txn = datastore.newTransaction();
         try {
@@ -130,6 +129,5 @@ public class RegisterResource {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Server Error").build();
             }
         }
-
     }
 }
