@@ -50,8 +50,6 @@ public class LoginResource {
                 .setKind("LoginRegistry").newKey("loginReg");
         Key loginLogKey = datastore.allocateId(datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", data.username)).setKind("LoginLog").newKey());
-        Key loginAuthTokenKey = datastore.allocateId(datastore.newKeyFactory()
-                .addAncestors(PathElement.of("User", data.username)).setKind("AuthToken").newKey());
         Transaction txn = datastore.newTransaction();
         try {
             Entity userOnDB = txn.get(userKey);
@@ -80,6 +78,8 @@ public class LoginResource {
                                     StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
                                             .setExcludeFromIndexes(true).build())
                             .build();
+                    Key loginAuthTokenKey = datastore.newKeyFactory()
+                            .addAncestors(PathElement.of("User", data.username)).setKind("AuthToken").newKey(tokenAuth.tokenID);
                     Entity loginAuthToken = Entity.newBuilder(loginAuthTokenKey)
                             .set("tokenID", tokenAuth.tokenID)
                             .set("username", tokenAuth.username)
@@ -94,7 +94,7 @@ public class LoginResource {
                     LOG.fine("Password is correct - Generated token and logs");
                     txn.put(loginLog, loginRegistryNew, loginAuthToken);
                     txn.commit();
-                    return Response.ok(g.toJson(tokenAuth)).build();
+                    return Response.ok(g.toJson(tokenAuth.tokenID)).build();
                 } else {
                     Entity.Builder loginRegistryBuilder = Entity.newBuilder(loginRegistry);
                     loginRegistryBuilder

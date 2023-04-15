@@ -5,6 +5,7 @@ import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import pt.unl.fct.di.apdc.adcdemo.util.AuthToken;
 import pt.unl.fct.di.apdc.adcdemo.util.RolePermissions;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,13 +34,27 @@ public class ListResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response doList(String usernameJSON, @Context HttpHeaders headers, @Context HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION).split(" ")[1];
         String username = new Gson().fromJson(usernameJSON, JsonObject.class).get("username").getAsString();
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
-        Key loginAuthTokenKey = datastore.allocateId(datastore.newKeyFactory()
-                .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey());
+        String headerToken = AuthToken.getAuthHeader(request);
+        Key loginAuthTokenKey = datastore.newKeyFactory()
+                .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey(headerToken);
         Transaction txn = datastore.newTransaction();
         try {
+            Entity tokenOnDB = txn.get(loginAuthTokenKey);
+            if (tokenOnDB == null) {
+                LOG.fine("Wrong credentials/token - not found");
+                txn.rollback();
+                return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+            } else {
+                boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"));
+                if (!isTokenValid) {
+                    LOG.fine("Expired token");
+                    txn.rollback();
+                    return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+                }
+                LOG.fine("Valid token - proceeding");
+            }
             Entity userOnDB = txn.get(userKey);
             if (userOnDB == null) {
                 LOG.fine("User dont exist");
