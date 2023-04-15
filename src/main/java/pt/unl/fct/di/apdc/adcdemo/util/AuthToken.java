@@ -19,4 +19,15 @@ public class AuthToken {
         this.creationDate = System.currentTimeMillis();
         this.expirationDate = this.creationDate + AuthToken.EXPIRATION_TIME;
     }
+
+    public AuthToken(String username, String tokenID, long creationDate, long expirationDate) {
+        this.username = username;
+        this.tokenID = tokenID;
+        this.creationDate = creationDate;
+        this.expirationDate = expirationDate;
+    }
+
+    public static boolean isValid(long expDate) {
+        return System.currentTimeMillis() <= expDate;
+    }
 }

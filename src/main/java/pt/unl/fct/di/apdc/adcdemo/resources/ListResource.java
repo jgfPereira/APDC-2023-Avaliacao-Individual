@@ -7,10 +7,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import pt.unl.fct.di.apdc.adcdemo.util.RolePermissions;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -29,9 +32,12 @@ public class ListResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response doList(String usernameJSON) {
+    public Response doList(String usernameJSON, @Context HttpHeaders headers, @Context HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION).split(" ")[1];
         String username = new Gson().fromJson(usernameJSON, JsonObject.class).get("username").getAsString();
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
+        Key loginAuthTokenKey = datastore.allocateId(datastore.newKeyFactory()
+                .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey());
         Transaction txn = datastore.newTransaction();
         try {
             Entity userOnDB = txn.get(userKey);
