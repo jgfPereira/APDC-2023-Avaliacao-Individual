@@ -37,6 +37,10 @@ public class ListResource {
         String username = new Gson().fromJson(usernameJSON, JsonObject.class).get("username").getAsString();
         Key userKey = datastore.newKeyFactory().setKind("User").newKey(username);
         String headerToken = AuthToken.getAuthHeader(request);
+        if (headerToken == null) {
+            LOG.fine("Wrong credentials/token - no auth header or invalid auth type");
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
+        }
         Key loginAuthTokenKey = datastore.newKeyFactory()
                 .addAncestors(PathElement.of("User", username)).setKind("AuthToken").newKey(headerToken);
         Transaction txn = datastore.newTransaction();

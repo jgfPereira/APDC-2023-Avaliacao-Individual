@@ -35,7 +35,14 @@ public class AuthToken {
     }
 
     public static String getAuthHeader(HttpServletRequest request) {
-        final String[] split = request.getHeader(HttpHeaders.AUTHORIZATION).split(" ");
+        final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header == null) {
+            return null;
+        }
+        final String[] split = header.split(" ");
+        if (split.length != 2) {
+            return null;
+        }
         return split[0].equals(AUTH_TYPE) ? split[1] : null;
     }
 }
