@@ -20,7 +20,7 @@ public class RolePermissions {
 
     public static boolean canUpdate(UpdateData data, String updaterRole, String updatedRole, String attributeName, String attributeValue) {
         // the key (username) of and entity cannot change after its created
-        if (attributeName.equals("creationDate")) {
+        if (attributeName.equals("creationDate") || attributeName.equals("password")) {
             return false;
         }
         if (data.isSameUser()) {
