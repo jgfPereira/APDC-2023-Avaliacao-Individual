@@ -1,0 +1,18 @@
+indexes:
+- kind: "LoginLog"
+  ancestor: yes
+  properties:
+  - name: "login_time"
+    direction: desc
+- kind: "User"
+  properties:
+  - name: "role"
+  - name: "visibility"
+  - name: "state"
+  - name: "name"
+  - name: "email"
+  - name: "__key__"
+- kind: "User"
+  properties:
+  - name: "email"
+  - name: "name"
