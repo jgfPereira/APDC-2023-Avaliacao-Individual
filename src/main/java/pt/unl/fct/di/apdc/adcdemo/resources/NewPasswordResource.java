@@ -90,7 +90,6 @@ public class NewPasswordResource {
             final String hashedNewPass = hashPass(data.newPassword);
             Entity userChanged = userChangedBuilder
                     .set("password", hashedNewPass)
-                    .set("passConf", hashedNewPass)
                     .build();
             txn.put(userChanged);
             LOG.fine("Password changed successfully");

@@ -71,7 +71,6 @@ public class RegisterResource {
             }
             Entity.Builder eb = Entity.newBuilder(userKey)
                     .set("password", hashPass(data.password))
-                    .set("passConf", hashPass(data.passConf))
                     .set("email", data.email)
                     .set("name", data.name)
                     .set("creationDate", Timestamp.now())
