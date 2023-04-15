@@ -60,7 +60,7 @@ public class ShowTokenResource {
                 txn.rollback();
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
             } else {
-                boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"));
+                boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
                 if (!isTokenValid) {
                     LOG.fine("Expired token");
                     txn.rollback();
@@ -77,7 +77,8 @@ public class ShowTokenResource {
             AuthToken resToken = new AuthToken(tokenOnDB.getString("username"),
                     tokenOnDB.getString("tokenID"),
                     tokenOnDB.getLong("creationDate"),
-                    tokenOnDB.getLong("expirationDate"));
+                    tokenOnDB.getLong("expirationDate"),
+                    tokenOnDB.getBoolean("isRevoked"));
             LOG.fine("Token info was sent to client");
             txn.commit();
             return Response.ok(g.toJson(resToken)).build();

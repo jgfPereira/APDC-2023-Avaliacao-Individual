@@ -57,7 +57,7 @@ public class NewPasswordResource {
                 txn.rollback();
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
             } else {
-                boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"));
+                boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
                 if (!isTokenValid) {
                     LOG.fine("Expired token");
                     txn.rollback();

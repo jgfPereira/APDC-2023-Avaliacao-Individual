@@ -12,6 +12,7 @@ public class AuthToken {
     public String tokenID;
     public long creationDate;
     public long expirationDate;
+    public boolean isRevoked;
 
     public AuthToken() {
     }
@@ -21,17 +22,19 @@ public class AuthToken {
         this.tokenID = UUID.randomUUID().toString();
         this.creationDate = System.currentTimeMillis();
         this.expirationDate = this.creationDate + AuthToken.EXPIRATION_TIME;
+        this.isRevoked = false;
     }
 
-    public AuthToken(String username, String tokenID, long creationDate, long expirationDate) {
+    public AuthToken(String username, String tokenID, long creationDate, long expirationDate, boolean isRevoked) {
         this.username = username;
         this.tokenID = tokenID;
         this.creationDate = creationDate;
         this.expirationDate = expirationDate;
+        this.isRevoked = isRevoked;
     }
 
-    public static boolean isValid(long expDate) {
-        return System.currentTimeMillis() <= expDate;
+    public static boolean isValid(long expDate, boolean isRevoked) {
+        return System.currentTimeMillis() <= expDate && !isRevoked;
     }
 
     public static String getAuthHeader(HttpServletRequest request) {

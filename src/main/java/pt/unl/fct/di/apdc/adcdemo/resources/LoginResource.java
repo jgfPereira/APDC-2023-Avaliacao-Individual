@@ -87,6 +87,7 @@ public class LoginResource {
                             .set("username", tokenAuth.username)
                             .set("creationDate", tokenAuth.creationDate)
                             .set("expirationDate", tokenAuth.expirationDate)
+                            .set("isRevoked", tokenAuth.isRevoked)
                             .build();
                     Entity.Builder loginRegistryBuilder = Entity.newBuilder(loginRegistry);
                     loginRegistryBuilder
@@ -154,7 +155,7 @@ public class LoginResource {
             LOG.fine("Wrong credentials/token - not found");
             return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
         } else {
-            boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"));
+            boolean isTokenValid = AuthToken.isValid(tokenOnDB.getLong("expirationDate"), tokenOnDB.getBoolean("isRevoked"));
             if (!isTokenValid) {
                 LOG.fine("Expired token");
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid credentials").build();
