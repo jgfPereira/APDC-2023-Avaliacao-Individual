@@ -111,6 +111,7 @@ public class LoginResource {
                 }
             } else {
                 LOG.fine("User does not exist");
+                txn.rollback();
                 return Response.status(Status.UNAUTHORIZED).entity(g.toJson("Wrong credentials")).build();
             }
         } catch (Exception e) {
