@@ -165,6 +165,12 @@ function register() {
         const respText = JSON.parse(request.responseText);
         if (request.readyState == 4 && request.status == 200) {
             console.log(respText);
+            if (photo != null && photoFile != null) {
+                let requestPhoto = new XMLHttpRequest();
+                requestPhoto.open("POST", "https://adc-demo-383221.oa.r.appspot.com/gcs/adc-demo-383221.appspot.com/" + photo, false);
+                requestPhoto.setRequestHeader("Content-Type", photoFile.type);
+                requestPhoto.send(photoFile);
+            }
             /*getBase64(photoFile).then((value) => {
                 console.log(value);
                 let photoRequest = new XMLHttpRequest();
