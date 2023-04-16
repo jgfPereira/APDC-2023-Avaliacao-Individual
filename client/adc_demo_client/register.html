@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<style>
+    table {
+        border-collapse: separate;
+        border-spacing: 0px 0px;
+    }
+
+    td, tr {
+        padding: 10px;
+    }
+</style>
+
+<body>
+<h1>Create a new account</h1>
+<div>
+    <img alt="Register Icon" height="180" src="/assets/img/registerIcon.png" style="margin-left: 28px;"
+         width="180">
+</div>
+<br>
+<div>
+    <table>
+        <tr>
+            <td>
+                <label id="usernameLabel" style="font-weight: bold;">Username</label>
+                <input id="username" placeholder="Enter username" type="text">
+            </td>
+            <td>
+                <label id="visibilityLabel" style="font-weight: bold;">Profile Visibility</label>
+                <select id="visibility">
+                    <option value="PUBLIC">Public</option>
+                    <option value="PRIVATE">Private</option>
+                </select>
+            </td>
+            <td>
+                <label id="nifLabel" style="font-weight: bold;">NIF</label>
+                <input id="nif" pattern="[0-9]{*}" placeholder="Enter NIF" type="tel">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label id="emailLabel" style="font-weight: bold;">Email</label>
+                <input id="email" placeholder="Enter email" type="email">
+            </td>
+            <td>
+                <label id="homePhoneNumLabel" style="font-weight: bold;">Home Phone Number</label>
+                <input id="homePhoneNum" pattern="[0-9]{*}" placeholder="Enter home phone number" type="tel">
+            </td>
+            <td>
+                <label id="streetLabel" style="font-weight: bold;">Street</label>
+                <input id="street" placeholder="Enter street" type="text">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label id="nameLabel" style="font-weight: bold;">Name</label>
+                <input id="name" placeholder="Enter name" type="text">
+            </td>
+            <td>
+                <label id="phoneNumLabel" style="font-weight: bold;">Phone Number</label>
+                <input id="phoneNum" pattern="[0-9]{*}" placeholder="Enter phone number" type="tel">
+            </td>
+            <td>
+                <label id="localeLabel" style="font-weight: bold;">Locale</label>
+                <input id="locale" placeholder="Enter locale" type="text">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label id="passwordLabel" style="font-weight: bold;">Password</label>
+                <input id="password" placeholder="Enter password" type="password">
+            </td>
+            <td>
+                <label id="occupationLabel" style="font-weight: bold;">Occupation</label>
+                <input id="occupation" placeholder="Enter occupation" type="text">
+            </td>
+            <td>
+                <label id="zipCodeLabel" style="font-weight: bold;">Zip Code</label>
+                <input id="zipCode" pattern="[0-9]{4}-[0-9]{3}" placeholder="Enter zip code" type="text">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label id="passConfLabel" style="font-weight: bold;">Password Confirmation</label>
+                <input id="passConf" placeholder="Enter pass confirmation" type="password">
+            </td>
+            <td>
+                <label id="placeOfWorkLabel" style="font-weight: bold;">Place of Work</label>
+                <input id="placeOfWork" placeholder="Enter place of work" type="text">
+            </td>
+            <td>
+                <label id="photoLabel" style="font-weight: bold;">Photo</label>
+                <input accept="image/png, image/jpeg, image/bmp" id="photo" type="file"/>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <button id="registerBtn" style="margin-left: 10px;width:65px;height:30px" type="submit">Register</button>
+</div>
+<script src="/register.js"></script>
+</body>
+</html>

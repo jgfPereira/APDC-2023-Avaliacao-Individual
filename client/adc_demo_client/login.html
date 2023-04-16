@@ -5,24 +5,22 @@
     <title>Login</title>
 </head>
 <body>
-
+<h1>Login with your account</h1>
 <div>
-    <img alt="Login Icon" class="loginIcon" height="250" src="loginIcon.jpg"
-         width="250">
+    <img style="margin-left: 25px;" alt="Login Icon" class="loginIcon" height="200" src="/assets/img/loginIcon.png"
+         width="200">
 </div>
-
+<br>
 <div>
-    <b>Username</b>
-    <input id="username" placeholder="Enter Username" required type="text">
+    <label id="usernameLabel" style="font-weight: bold;">Username</label>
+    <input id="username" placeholder="Enter Username" type="text">
     <br> <br>
-    <b>Password</b>
-    <input id="password" placeholder="Enter Password" required type="password">
+    <label id="passwordLabel" style="font-weight: bold;">Password</label>
+    <input id="password" placeholder="Enter Password" type="password">
     <br> <br>
     <button id="loginBtn" type="submit">Login</button>
     <br> <br>
 </div>
-
 <script src="/login.js"></script>
-
 </body>
 </html>
