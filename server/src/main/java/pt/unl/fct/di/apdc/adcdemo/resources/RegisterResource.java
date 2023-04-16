@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import pt.unl.fct.di.apdc.adcdemo.util.AddPhotoData;
@@ -122,17 +121,13 @@ public class RegisterResource {
         }
         Client client = ClientBuilder.newClient(new ClientConfig());
         WebTarget webTarget = client.target("https://adc-demo-383221.oa.r.appspot.com/gcs/adc-demo-383221.appspot.com/" + data.photo);
-
         File file = new File("tmp." + data.getExtension());
         FileUtils.writeByteArrayToFile(file, data.getPhotoBinary());
-
         final FileDataBodyPart filePart = new FileDataBodyPart(data.photo, file);
         FormDataMultiPart multipart = new FormDataMultiPart();
         multipart.bodyPart(filePart);
-
         Response r = webTarget.request().accept(MediaType.APPLICATION_JSON)
                 .post(javax.ws.rs.client.Entity.entity(multipart, multipart.getMediaType()));
-
         if (r.getStatus() == Response.Status.OK.getStatusCode()) {
             return Response.ok(g.toJson("Profile picture added")).build();
         } else {
