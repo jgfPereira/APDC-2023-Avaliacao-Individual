@@ -4,14 +4,25 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.*;
 import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import pt.unl.fct.di.apdc.adcdemo.util.AddPhotoData;
 import pt.unl.fct.di.apdc.adcdemo.util.RegisterData;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
 @Path("/register")
@@ -98,33 +109,34 @@ public class RegisterResource {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
             }
         }
-        //associate photo with user (if any)
-//        Transaction addPhotoTxn = datastore.newTransaction();
-//        try {
-//            Storage storage = StorageOptions.getDefaultInstance().getService();
-//            String photoName = String.format(MediaResourceServlet.USER_PHOTO_NAME_FMT, data.username);
-//            Blob blob = storage.get(BlobId.of(MediaResourceServlet.BUCKET, photoName));
-//            if (blob != null) {
-//                Entity.Builder userChangedBuilder = Entity.newBuilder(txn.get(userKey)).set("photo", photoName);
-//                Entity e = userChangedBuilder.build();
-//                addPhotoTxn.put(e);
-//                LOG.fine("Added profile picture to user");
-//                addPhotoTxn.commit();
-//                return Response.ok(g.toJson("Register done - Profile picture added")).build();
-//            } else {
-//                LOG.info("User didnt give profile picture");
-//                addPhotoTxn.commit();
-//                return Response.ok(g.toJson("Register done - User didnt give profile picture")).build();
-//            }
-//        } catch (Exception e) {
-//            addPhotoTxn.rollback();
-//            LOG.severe(e.getLocalizedMessage());
-//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
-//        } finally {
-//            if (addPhotoTxn.isActive()) {
-//                addPhotoTxn.rollback();
-//                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
-//            }
-//        }
+    }
+
+    @POST
+    @Path("/addphoto")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response doAddPhoto(AddPhotoData data) throws IOException {
+        LOG.fine("Adding profile picture of user");
+        if (data == null || !data.validateData()) {
+            LOG.fine("Invalid data: at least one field is null");
+            return Response.status(Response.Status.BAD_REQUEST).entity(g.toJson("Bad Request - Invalid data")).build();
+        }
+        Client client = ClientBuilder.newClient(new ClientConfig());
+        WebTarget webTarget = client.target("https://adc-demo-383221.oa.r.appspot.com/gcs/adc-demo-383221.appspot.com/" + data.photo);
+
+        File file = new File("tmp." + data.getExtension());
+        FileUtils.writeByteArrayToFile(file, data.getPhotoBinary());
+
+        final FileDataBodyPart filePart = new FileDataBodyPart(data.photo, file);
+        FormDataMultiPart multipart = new FormDataMultiPart();
+        multipart.bodyPart(filePart);
+
+        Response r = webTarget.request().accept(MediaType.APPLICATION_JSON)
+                .post(javax.ws.rs.client.Entity.entity(multipart, multipart.getMediaType()));
+
+        if (r.getStatus() == Response.Status.OK.getStatusCode()) {
+            return Response.ok(g.toJson("Profile picture added")).build();
+        } else {
+            return Response.status(r.getStatus()).entity(g.toJson("Profile picture not added")).build();
+        }
     }
 }

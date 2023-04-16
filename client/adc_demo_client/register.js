@@ -35,8 +35,7 @@ passwordInput.addEventListener("change", changeLabelToNormalPassword);
 passConfInput.addEventListener("change", changeLabelToNormalPassConf);
 nifInput.addEventListener("change", changeLabelToNormalNIF);
 
-let shouldReturn = false;
-
+let shouldReturn = false
 
 function changeLabelToNormalUserName() {
     usernameLabel.style.color = "black";
@@ -166,7 +165,22 @@ function register() {
         const respText = JSON.parse(request.responseText);
         if (request.readyState == 4 && request.status == 200) {
             console.log(respText);
-            uploadFileGCS(photoFile, photo);
+            /*getBase64(photoFile).then((value) => {
+                console.log(value);
+                let photoRequest = new XMLHttpRequest();
+                photoRequest.open("POST", "https://adc-demo-383221.oa.r.appspot.com/rest/register/addphoto", false);
+                photoRequest.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+                const bodyPhoto = JSON.stringify({username: username, photo: photo, photoBase64: value});
+                photoRequest.onload = () => {
+                    const respTextPhoto = JSON.parse(photoRequest.responseText);
+                    if (photoRequest.readyState == 4 && photoRequest.status == 200) {
+                        console.log(respTextPhoto);
+                    } else {
+                        window.alert(respTextPhoto);
+                    }
+                };
+                photoRequest.send(bodyPhoto);
+            });*/
         } else {
             window.alert(respText);
         }
@@ -174,14 +188,35 @@ function register() {
     request.send(body);
 }
 
-function uploadFileGCS(file, fileName) {
-    let bucket = "adc-demo-383221.appspot.com";
-    let request = new XMLHttpRequest();
-    request.open("POST", "/gcs/" + bucket + "/" + fileName, false);
-    request.setRequestHeader("Content-Type", file.type);
-    request.send(file);
+function getBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
 }
 
+function getData(value) {
+    console.log(value);
+    let request = new XMLHttpRequest();
+    request.open("POST", "https://adc-demo-383221.oa.r.appspot.com/rest/register/addphoto", false);
+    request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+    const body = JSON.stringify(value);
+    request.onload = () => {
+        const respText = JSON.parse(request.responseText);
+        if (request.readyState == 4 && request.status == 200) {
+            console.log(respText);
+        } else {
+            window.alert(respText);
+        }
+    };
+    request.send(body);
+}
+
+function getError(reason) {
+    console.log(reason);
+}
 
 
 

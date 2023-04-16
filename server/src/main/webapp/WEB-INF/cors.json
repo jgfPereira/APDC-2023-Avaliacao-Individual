@@ -5,7 +5,8 @@
       "https://adc-demo-383221.oa.r.appspot.com/"
     ],
     "method": [
-      "GET"
+      "GET",
+      "POST"
     ],
     "responseHeader": [
       "Content-Type",
