@@ -25,6 +25,7 @@ public class RegisterData {
     public String street;
     public String locale;
     public String zipCode;
+    public String photo;
 
     public RegisterData() {
     }

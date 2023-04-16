@@ -6,6 +6,11 @@ let nameLabel = document.getElementById("nameLabel");
 let passwordLabel = document.getElementById("passwordLabel");
 let passConfLabel = document.getElementById("passConfLabel");
 
+let nifLabel = document.getElementById("nifLabel");
+let homePhoneNumLabel = document.getElementById("homePhoneNumLabel");
+let phoneNumLabel = document.getElementById("phoneNumLabel");
+let zipCodeLabel = document.getElementById("zipCodeLabel");
+
 let usernameInput = document.getElementById("username");
 let emailInput = document.getElementById("email");
 let nameInput = document.getElementById("name");
@@ -28,6 +33,10 @@ emailInput.addEventListener("change", changeLabelToNormalEmail);
 nameInput.addEventListener("change", changeLabelToNormalName);
 passwordInput.addEventListener("change", changeLabelToNormalPassword);
 passConfInput.addEventListener("change", changeLabelToNormalPassConf);
+nifInput.addEventListener("change", changeLabelToNormalNIF);
+
+let shouldReturn = false;
+
 
 function changeLabelToNormalUserName() {
     usernameLabel.style.color = "black";
@@ -49,6 +58,10 @@ function changeLabelToNormalPassConf() {
     passConfLabel.style.color = "black";
 }
 
+function changeLabelToNormalNIF() {
+    nifLabel.style.color = "black";
+}
+
 function jsonSetEmptyToNull(s) {
     if (s === "") {
         return null;
@@ -58,22 +71,27 @@ function jsonSetEmptyToNull(s) {
 }
 
 function serializeVisibilityToStr() {
-    let option = visibilitySelect.selectedIndex;
-    if (option == -1) {
-        return null;
-    }
-    return visibilitySelect.options[option].text;
+    let option = visibilitySelect.options[visibilitySelect.selectedIndex].value;
+    return option === "" ? null : option;
 }
 
 function serializePhotoToStr(username) {
-    if (photoInput.files.length === 0) {
+    if (photoInput.files.length === 0 || username === "") {
         return null;
     }
     let photoFile = photoInput.files[0];
     let photoFilename = photoFile.name;
     let extension = "." + photoFilename.split('.').pop();
     const newFileName = "photo_" + username + extension;
-    return newFileName;
+    return [photoFile, newFileName];
+}
+
+function verifyField(fieldLabel, filter, errorMsg) {
+    if (filter) {
+        window.alert(errorMsg)
+        fieldLabel.style.color = "red";
+        shouldReturn = true;
+    }
 }
 
 function register() {
@@ -91,7 +109,13 @@ function register() {
     let street = streetInput.value;
     let locale = localeInput.value;
     let zipcode = zipCodeInput.value;
-    let photo = serializePhotoToStr(username); // change photo association to user on server side
+    let serializePhoto = serializePhotoToStr(username);
+    let photoFile = null;
+    let photo = null;
+    if (serializePhoto != null) {
+        photoFile = serializePhoto[0];
+        photo = serializePhoto[1];
+    }
     if (username === "" || email === "" || name === "" || password === "" || passConf === "") {
         window.alert("Enter all required fields");
         if (username === "") {
@@ -109,6 +133,13 @@ function register() {
         if (passConf === "") {
             passConfLabel.style.color = "red";
         }
+        shouldReturn = true;
+    }
+    verifyField(nifLabel, !new RegExp("^[0-9]*$").test(nif), "Only digits allowed on NIF");
+    verifyField(homePhoneNumLabel, !new RegExp("^[0-9]*$").test(homePhoneNum), "Only digits allowed on home phone number");
+    verifyField(phoneNumLabel, !new RegExp("^[0-9]*$").test(phoneNum), "Only digits allowed on phone number");
+    verifyField(zipCodeLabel, !new RegExp("^[0-9]{4}-[0-9]{3}$").test(zipcode) && zipcode !== "", "Zip code format is XXXX-XXX with digits");
+    if (shouldReturn) {
         return;
     }
     let request = new XMLHttpRequest();
@@ -128,19 +159,27 @@ function register() {
         nif: jsonSetEmptyToNull(nif),
         street: jsonSetEmptyToNull(street),
         locale: jsonSetEmptyToNull(locale),
-        zipcode: jsonSetEmptyToNull(zipcode),
+        zipCode: jsonSetEmptyToNull(zipcode),
         photo: jsonSetEmptyToNull(photo)
     });
     request.onload = () => {
         const respText = JSON.parse(request.responseText);
         if (request.readyState == 4 && request.status == 200) {
             console.log(respText);
+            uploadFileGCS(photoFile, photo);
         } else {
             window.alert(respText);
         }
     };
     request.send(body);
+}
 
+function uploadFileGCS(file, fileName) {
+    let bucket = "adc-demo-383221.appspot.com";
+    let request = new XMLHttpRequest();
+    request.open("POST", "/gcs/" + bucket + "/" + fileName, false);
+    request.setRequestHeader("Content-Type", file.type);
+    request.send(file);
 }
 
 

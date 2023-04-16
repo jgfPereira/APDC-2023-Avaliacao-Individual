@@ -2,13 +2,8 @@ package pt.unl.fct.di.apdc.adcdemo.resources;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.*;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.google.gson.Gson;
 import org.apache.commons.codec.digest.DigestUtils;
-import pt.unl.fct.di.apdc.adcdemo.servlets.MediaResourceServlet;
 import pt.unl.fct.di.apdc.adcdemo.util.RegisterData;
 
 import javax.ws.rs.Consumes;
@@ -77,8 +72,8 @@ public class RegisterResource {
                     .set("name", data.name)
                     .set("creationDate", Timestamp.now())
                     .set("role", RegisterData.DEFAULT_ROLE)
-                    .set("state", RegisterData.DEFAULT_STATE)
-                    .setNull("photo");
+                    .set("state", RegisterData.DEFAULT_STATE);
+            setWithNulls(eb, "photo", data.photo);
             setWithNulls(eb, "visibility", data.visibility);
             setWithNulls(eb, "homePhoneNum", data.homePhoneNum);
             setWithNulls(eb, "phoneNum", data.phoneNum);
@@ -92,6 +87,7 @@ public class RegisterResource {
             txn.put(user);
             LOG.fine("Register done: " + data.username);
             txn.commit();
+            return Response.ok(g.toJson("Register done")).build();
         } catch (Exception e) {
             txn.rollback();
             LOG.severe(e.getLocalizedMessage());
@@ -103,32 +99,32 @@ public class RegisterResource {
             }
         }
         //associate photo with user (if any)
-        Transaction addPhotoTxn = datastore.newTransaction();
-        try {
-            Storage storage = StorageOptions.getDefaultInstance().getService();
-            String photoName = String.format(MediaResourceServlet.USER_PHOTO_NAME_FMT, data.username);
-            Blob blob = storage.get(BlobId.of(MediaResourceServlet.BUCKET, photoName));
-            if (blob != null) {
-                Entity.Builder userChangedBuilder = Entity.newBuilder(txn.get(userKey)).set("photo", photoName);
-                Entity e = userChangedBuilder.build();
-                addPhotoTxn.put(e);
-                LOG.fine("Added profile picture to user");
-                addPhotoTxn.commit();
-                return Response.ok(g.toJson("Register done - Profile picture added")).build();
-            } else {
-                LOG.info("User didnt give profile picture");
-                addPhotoTxn.commit();
-                return Response.ok(g.toJson("Register done - User didnt give profile picture")).build();
-            }
-        } catch (Exception e) {
-            addPhotoTxn.rollback();
-            LOG.severe(e.getLocalizedMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
-        } finally {
-            if (addPhotoTxn.isActive()) {
-                addPhotoTxn.rollback();
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
-            }
-        }
+//        Transaction addPhotoTxn = datastore.newTransaction();
+//        try {
+//            Storage storage = StorageOptions.getDefaultInstance().getService();
+//            String photoName = String.format(MediaResourceServlet.USER_PHOTO_NAME_FMT, data.username);
+//            Blob blob = storage.get(BlobId.of(MediaResourceServlet.BUCKET, photoName));
+//            if (blob != null) {
+//                Entity.Builder userChangedBuilder = Entity.newBuilder(txn.get(userKey)).set("photo", photoName);
+//                Entity e = userChangedBuilder.build();
+//                addPhotoTxn.put(e);
+//                LOG.fine("Added profile picture to user");
+//                addPhotoTxn.commit();
+//                return Response.ok(g.toJson("Register done - Profile picture added")).build();
+//            } else {
+//                LOG.info("User didnt give profile picture");
+//                addPhotoTxn.commit();
+//                return Response.ok(g.toJson("Register done - User didnt give profile picture")).build();
+//            }
+//        } catch (Exception e) {
+//            addPhotoTxn.rollback();
+//            LOG.severe(e.getLocalizedMessage());
+//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
+//        } finally {
+//            if (addPhotoTxn.isActive()) {
+//                addPhotoTxn.rollback();
+//                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(g.toJson("Server Error")).build();
+//            }
+//        }
     }
 }
